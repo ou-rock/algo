@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>算法可视化工具 - Algorithm Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        .algorithm-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-sort {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-search {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-simple {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .btn-control {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+
+        .btn-reset {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .visualization {
+            padding: 40px;
+            min-height: 400px;
+            position: relative;
+        }
+
+        .canvas-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+        }
+
+        .info-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .info-panel h3 {
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .info-panel p {
+            color: #6c757d;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card .label {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .speed-control input[type="range"] {
+            flex: 1;
+        }
+
+        footer {
+            background: #212529;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9em;
+        }
+
+        .description-box {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .animating {
+            animation: pulse 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 算法可视化工具</h1>
+            <p>Algorithm Visualization Tool - 直观理解算法原理</p>
+        </header>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>📊 选择算法类型:</label>
+                <div class="algorithm-buttons">
+                    <button class="btn-sort" onclick="visualize('bubbleSort')">冒泡排序</button>
+                    <button class="btn-sort" onclick="visualize('insertionSort')">插入排序</button>
+                    <button class="btn-sort" onclick="visualize('selectionSort')">选择排序</button>
+                    <button class="btn-search" onclick="visualize('binarySearch')">二分查找</button>
+                    <button class="btn-simple" onclick="visualize('findMax')">查找最大值</button>
+                    <button class="btn-simple" onclick="visualize('arraySum')">数组求和</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>🔢 输入数据 (用逗号分隔):</label>
+                <input type="text" id="dataInput" value="64, 34, 25, 12, 22, 11, 90"
+                       placeholder="例如: 5, 2, 8, 1, 9, 3">
+            </div>
+
+            <div class="control-group" id="targetGroup" style="display: none;">
+                <label>🎯 查找目标值:</label>
+                <input type="number" id="targetInput" value="25">
+            </div>
+
+            <div class="control-group">
+                <label>⚡ 动画速度:</label>
+                <div class="speed-control">
+                    <span>慢</span>
+                    <input type="range" id="speedControl" min="100" max="2000" value="800" step="100">
+                    <span>快</span>
+                    <span id="speedValue">800ms</span>
+                </div>
+            </div>
+
+            <div class="algorithm-buttons">
+                <button class="btn-control" onclick="startAnimation()">▶️ 开始</button>
+                <button class="btn-control" onclick="pauseAnimation()">⏸️ 暂停</button>
+                <button class="btn-control" onclick="stepForward()">⏭️ 下一步</button>
+                <button class="btn-reset" onclick="resetAnimation()">🔄 重置</button>
+                <button class="btn-reset" onclick="generateRandomData()">🎲 随机数据</button>
+            </div>
+        </div>
+
+        <div class="visualization">
+            <div class="description-box" id="algorithmDescription">
+                选择一个算法开始可视化演示
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="canvas" width="1000" height="400"></canvas>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #3498db;"></div>
+                    <span>未处理</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f39c12;"></div>
+                    <span>正在比较</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e74c3c;"></div>
+                    <span>交换/选中</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #2ecc71;"></div>
+                    <span>已完成</span>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <h3 id="algoTitle">算法信息</h3>
+                <p id="algoInfo">请选择一个算法查看详细信息</p>
+
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="label">当前步骤</div>
+                        <div class="value" id="currentStep">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">总步骤</div>
+                        <div class="value" id="totalSteps">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">比较次数</div>
+                        <div class="value" id="comparisons">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">交换次数</div>
+                        <div class="value" id="swaps">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>💻 数据结构和算法可视化工具 | 让学习算法更直观、更有趣</p>
+            <p>Made with ❤️ by Claude | 2025</p>
+        </footer>
+    </div>
+
+    <script>
+        // 全局变量
+        let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext('2d');
+        let currentAlgorithm = null;
+        let steps = [];
+        let currentStepIndex = 0;
+        let isAnimating = false;
+        let animationInterval = null;
+        let comparisons = 0;
+        let swaps = 0;
+
+        // 算法描述
+        const algorithmDescriptions = {
+            bubbleSort: {
+                title: '冒泡排序 (Bubble Sort)',
+                description: '重复遍历数组,比较相邻元素,如果顺序错误就交换它们,直到不需要再交换为止。时间复杂度: O(n²)',
+                info: '冒泡排序是最简单的排序算法之一。它的工作原理是重复地遍历要排序的数列,一次比较两个元素,如果它们的顺序错误就把它们交换过来。'
+            },
+            insertionSort: {
+                title: '插入排序 (Insertion Sort)',
+                description: '构建有序序列,对于未排序数据,在已排序序列中从后向前扫描,找到相应位置并插入。时间复杂度: O(n²)',
+                info: '插入排序的工作方式像许多人排序一手扑克牌。开始时,我们的左手为空并且桌子上的牌面向下。然后,我们每次从桌子上拿走一张牌并将它插入左手中正确的位置。'
+            },
+            selectionSort: {
+                title: '选择排序 (Selection Sort)',
+                description: '每次从未排序部分选择最小(大)元素,放到已排序部分的末尾。时间复杂度: O(n²)',
+                info: '选择排序算法的实现思路有点类似插入排序,也分已排序区间和未排序区间。但是选择排序每次会从未排序区间中找到最小的元素,将其放到已排序区间的末尾。'
+            },
+            binarySearch: {
+                title: '二分查找 (Binary Search)',
+                description: '在有序数组中查找特定元素,每次将搜索区间缩小一半。时间复杂度: O(log n)',
+                info: '二分查找是一种非常高效的查找算法。前提是数组必须是有序的。它的思想是:每次将搜索区间缩小为一半,直到找到目标元素,或者确定不存在。'
+            },
+            findMax: {
+                title: '查找最大值 (Find Maximum)',
+                description: '遍历数组,记录当前最大值,最终找到数组中的最大元素。时间复杂度: O(n)',
+                info: '查找最大值是一个简单但实用的算法。通过一次遍历数组,比较每个元素与当前最大值,最终找到数组中的最大元素。'
+            },
+            arraySum: {
+                title: '数组求和 (Array Sum)',
+                description: '遍历数组,累加所有元素,得到数组的总和。时间复杂度: O(n)',
+                info: '数组求和是最基础的算法之一。通过遍历数组,将每个元素累加到总和中,最终得到所有元素的和。'
+            }
+        };
+
+        // 更新速度显示
+        document.getElementById('speedControl').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+        });
+
+        // 生成随机数据
+        function generateRandomData() {
+            const count = 8 + Math.floor(Math.random() * 5); // 8-12个数
+            const data = [];
+            for (let i = 0; i < count; i++) {
+                data.push(Math.floor(Math.random() * 90) + 10); // 10-99的随机数
+            }
+            document.getElementById('dataInput').value = data.join(', ');
+        }
+
+        // 获取输入数据
+        function getInputData() {
+            const input = document.getElementById('dataInput').value;
+            return input.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+        }
+
+        // 可视化算法
+        function visualize(algorithm) {
+            currentAlgorithm = algorithm;
+            const data = getInputData();
+
+            if (data.length === 0) {
+                alert('请输入有效的数据!');
+                return;
+            }
+
+            // 显示/隐藏目标值输入框
+            document.getElementById('targetGroup').style.display =
+                algorithm === 'binarySearch' ? 'block' : 'none';
+
+            // 更新描述
+            const desc = algorithmDescriptions[algorithm];
+            document.getElementById('algorithmDescription').textContent = desc.description;
+            document.getElementById('algoTitle').textContent = desc.title;
+            document.getElementById('algoInfo').textContent = desc.info;
+
+            // 重置统计
+            comparisons = 0;
+            swaps = 0;
+            updateStats();
+
+            // 生成步骤
+            switch (algorithm) {
+                case 'bubbleSort':
+                    steps = generateBubbleSortSteps(data);
+                    break;
+                case 'insertionSort':
+                    steps = generateInsertionSortSteps(data);
+                    break;
+                case 'selectionSort':
+                    steps = generateSelectionSortSteps(data);
+                    break;
+                case 'binarySearch':
+                    const target = parseInt(document.getElementById('targetInput').value);
+                    steps = generateBinarySearchSteps(data.sort((a, b) => a - b), target);
+                    break;
+                case 'findMax':
+                    steps = generateFindMaxSteps(data);
+                    break;
+                case 'arraySum':
+                    steps = generateArraySumSteps(data);
+                    break;
+            }
+
+            currentStepIndex = 0;
+            document.getElementById('totalSteps').textContent = steps.length;
+            drawStep(steps[0]);
+        }
+
+        // 冒泡排序步骤生成
+        function generateBubbleSortSteps(data) {
+            const steps = [];
+            const arr = [...data];
+            const n = arr.length;
+
+            steps.push({
+                array: [...arr],
+                comparing: [],
+                sorted: [],
+                description: '初始状态'
+            });
+
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n - i - 1; j++) {
+                    steps.push({
+                        array: [...arr],
+                        comparing: [j, j + 1],
+                        sorted: Array.from({length: i}, (_, k) => n - 1 - k),
+                        description: `比较 ${arr[j]} 和 ${arr[j+1]}`
+                    });
+
+                    comparisons++;
+
+                    if (arr[j] > arr[j + 1]) {
+                        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+                        swaps++;
+                        steps.push({
+                            array: [...arr],
+                            swapped: [j, j + 1],
+                            sorted: Array.from({length: i}, (_, k) => n - 1 - k),
+                            description: `交换 ${arr[j]} 和 ${arr[j+1]}`
+                        });
+                    }
+                }
+            }
+
+            steps.push({
+                array: [...arr],
+                comparing: [],
+                sorted: Array.from({length: n}, (_, i) => i),
+                description: '排序完成!'
+            });
+
+            return steps;
+        }
+
+        // 插入排序步骤生成
+        function generateInsertionSortSteps(data) {
+            const steps = [];
+            const arr = [...data];
+            const n = arr.length;
+
+            steps.push({
+                array: [...arr],
+                sorted: [0],
+                description: '初始状态'
+            });
+
+            for (let i = 1; i < n; i++) {
+                const key = arr[i];
+                let j = i - 1;
+
+                steps.push({
+                    array: [...arr],
+                    inserting: i,
+                    sorted: Array.from({length: i}, (_, k) => k),
+                    description: `选择元素 ${key} 准备插入`
+                });
+
+                while (j >= 0 && arr[j] > key) {
+                    comparisons++;
+                    steps.push({
+                        array: [...arr],
+                        comparing: [j, j + 1],
+                        sorted: Array.from({length: i}, (_, k) => k),
+                        description: `比较 ${arr[j]} > ${key}, 向右移动`
+                    });
+
+                    arr[j + 1] = arr[j];
+                    j--;
+                }
+
+                arr[j + 1] = key;
+                swaps++;
+
+                steps.push({
+                    array: [...arr],
+                    sorted: Array.from({length: i + 1}, (_, k) => k),
+                    description: `将 ${key} 插入到位置 ${j + 1}`
+                });
+            }
+
+            steps.push({
+                array: [...arr],
+                sorted: Array.from({length: n}, (_, i) => i),
+                description: '排序完成!'
+            });
+
+            return steps;
+        }
+
+        // 选择排序步骤生成
+        function generateSelectionSortSteps(data) {
+            const steps = [];
+            const arr = [...data];
+            const n = arr.length;
+
+            steps.push({
+                array: [...arr],
+                sorted: [],
+                description: '初始状态'
+            });
+
+            for (let i = 0; i < n; i++) {
+                let minIdx = i;
+
+                steps.push({
+                    array: [...arr],
+                    minIndex: minIdx,
+                    sorted: Array.from({length: i}, (_, k) => k),
+                    description: `在位置 ${i} 到 ${n-1} 中寻找最小值`
+                });
+
+                for (let j = i + 1; j < n; j++) {
+                    comparisons++;
+                    steps.push({
+                        array: [...arr],
+                        comparing: [j, minIdx],
+                        minIndex: minIdx,
+                        sorted: Array.from({length: i}, (_, k) => k),
+                        description: `比较 ${arr[j]} 和当前最小值 ${arr[minIdx]}`
+                    });
+
+                    if (arr[j] < arr[minIdx]) {
+                        minIdx = j;
+                    }
+                }
+
+                if (minIdx !== i) {
+                    [arr[i], arr[minIdx]] = [arr[minIdx], arr[i]];
+                    swaps++;
+                    steps.push({
+                        array: [...arr],
+                        swapped: [i, minIdx],
+                        sorted: Array.from({length: i}, (_, k) => k),
+                        description: `交换 ${arr[minIdx]} 和 ${arr[i]}`
+                    });
+                }
+
+                steps.push({
+                    array: [...arr],
+                    sorted: Array.from({length: i + 1}, (_, k) => k),
+                    description: `位置 ${i} 已排序`
+                });
+            }
+
+            steps.push({
+                array: [...arr],
+                sorted: Array.from({length: n}, (_, i) => i),
+                description: '排序完成!'
+            });
+
+            return steps;
+        }
+
+        // 二分查找步骤生成
+        function generateBinarySearchSteps(data, target) {
+            const steps = [];
+            const arr = [...data];
+            let low = 0, high = arr.length - 1;
+
+            steps.push({
+                array: arr,
+                low: low,
+                high: high,
+                target: target,
+                description: `在排序数组中查找 ${target}`
+            });
+
+            while (low <= high) {
+                const mid = Math.floor(low + (high - low) / 2);
+                comparisons++;
+
+                steps.push({
+                    array: arr,
+                    low: low,
+                    high: high,
+                    mid: mid,
+                    target: target,
+                    description: `检查中间位置 ${mid}, 值为 ${arr[mid]}`
+                });
+
+                if (arr[mid] === target) {
+                    steps.push({
+                        array: arr,
+                        low: low,
+                        high: high,
+                        mid: mid,
+                        found: true,
+                        target: target,
+                        description: `找到目标值 ${target} 在位置 ${mid}!`
+                    });
+                    break;
+                } else if (arr[mid] < target) {
+                    steps.push({
+                        array: arr,
+                        low: low,
+                        high: high,
+                        mid: mid,
+                        target: target,
+                        description: `${arr[mid]} < ${target}, 在右半部分查找`
+                    });
+                    low = mid + 1;
+                } else {
+                    steps.push({
+                        array: arr,
+                        low: low,
+                        high: high,
+                        mid: mid,
+                        target: target,
+                        description: `${arr[mid]} > ${target}, 在左半部分查找`
+                    });
+                    high = mid - 1;
+                }
+            }
+
+            if (low > high) {
+                steps.push({
+                    array: arr,
+                    target: target,
+                    description: `未找到目标值 ${target}`
+                });
+            }
+
+            return steps;
+        }
+
+        // 查找最大值步骤生成
+        function generateFindMaxSteps(data) {
+            const steps = [];
+            const arr = [...data];
+            let maxIdx = 0;
+
+            steps.push({
+                array: arr,
+                current: 0,
+                maxIndex: 0,
+                description: `初始最大值: ${arr[0]} (位置 0)`
+            });
+
+            for (let i = 1; i < arr.length; i++) {
+                comparisons++;
+                steps.push({
+                    array: arr,
+                    current: i,
+                    maxIndex: maxIdx,
+                    description: `比较 ${arr[i]} 和当前最大值 ${arr[maxIdx]}`
+                });
+
+                if (arr[i] > arr[maxIdx]) {
+                    maxIdx = i;
+                    steps.push({
+                        array: arr,
+                        current: i,
+                        maxIndex: maxIdx,
+                        description: `更新最大值: ${arr[i]} (位置 ${i})`
+                    });
+                }
+            }
+
+            steps.push({
+                array: arr,
+                current: arr.length - 1,
+                maxIndex: maxIdx,
+                description: `找到最大值: ${arr[maxIdx]} (位置 ${maxIdx})`
+            });
+
+            return steps;
+        }
+
+        // 数组求和步骤生成
+        function generateArraySumSteps(data) {
+            const steps = [];
+            const arr = [...data];
+            let sum = 0;
+
+            steps.push({
+                array: arr,
+                current: -1,
+                sum: 0,
+                description: '开始求和, 初始和为 0'
+            });
+
+            for (let i = 0; i < arr.length; i++) {
+                steps.push({
+                    array: arr,
+                    current: i,
+                    sum: sum,
+                    description: `当前和: ${sum}, 加上 ${arr[i]}`
+                });
+
+                sum += arr[i];
+
+                steps.push({
+                    array: arr,
+                    current: i,
+                    sum: sum,
+                    description: `累加后的和: ${sum}`
+                });
+            }
+
+            steps.push({
+                array: arr,
+                current: arr.length - 1,
+                sum: sum,
+                description: `最终和: ${sum}`
+            });
+
+            return steps;
+        }
+
+        // 绘制步骤
+        function drawStep(step) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const arr = step.array;
+            const n = arr.length;
+            const maxVal = Math.max(...arr);
+            const barWidth = Math.min(80, (canvas.width - 100) / n);
+            const maxHeight = canvas.height - 100;
+
+            // 绘制每个元素
+            for (let i = 0; i < n; i++) {
+                const height = (arr[i] / maxVal) * maxHeight;
+                const x = 50 + i * barWidth;
+                const y = canvas.height - 50 - height;
+
+                // 确定颜色
+                let color = '#3498db'; // 默认蓝色
+
+                if (step.sorted && step.sorted.includes(i)) {
+                    color = '#2ecc71'; // 绿色 - 已排序
+                } else if (step.comparing && step.comparing.includes(i)) {
+                    color = '#f39c12'; // 橙色 - 正在比较
+                } else if (step.swapped && step.swapped.includes(i)) {
+                    color = '#e74c3c'; // 红色 - 交换
+                } else if (step.inserting === i) {
+                    color = '#9b59b6'; // 紫色 - 插入
+                } else if (step.minIndex === i) {
+                    color = '#f1c40f'; // 黄色 - 最小值
+                } else if (step.maxIndex === i) {
+                    color = '#2ecc71'; // 绿色 - 最大值
+                } else if (step.current === i) {
+                    color = '#f39c12'; // 橙色 - 当前元素
+                } else if (step.mid === i) {
+                    if (step.found) {
+                        color = '#2ecc71'; // 绿色 - 找到
+                    } else {
+                        color = '#f39c12'; // 橙色 - 中间
+                    }
+                } else if (step.low !== undefined && step.high !== undefined) {
+                    if (i >= step.low && i <= step.high) {
+                        color = '#3498db'; // 蓝色 - 搜索范围
+                    } else {
+                        color = '#bdc3c7'; // 灰色 - 超出范围
+                    }
+                }
+
+                // 绘制柱子
+                ctx.fillStyle = color;
+                ctx.fillRect(x, y, barWidth - 10, height);
+                ctx.strokeStyle = '#2c3e50';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, y, barWidth - 10, height);
+
+                // 绘制数值
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(arr[i], x + (barWidth - 10) / 2, y - 5);
+
+                // 绘制索引
+                ctx.fillStyle = '#7f8c8d';
+                ctx.font = '12px Arial';
+                ctx.fillText(i, x + (barWidth - 10) / 2, canvas.height - 30);
+            }
+
+            // 绘制目标线（二分查找）
+            if (step.target !== undefined) {
+                const targetY = canvas.height - 50 - (step.target / maxVal) * maxHeight;
+                ctx.strokeStyle = '#e74c3c';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(30, targetY);
+                ctx.lineTo(canvas.width - 30, targetY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.fillStyle = '#e74c3c';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(`目标: ${step.target}`, canvas.width - 100, targetY - 5);
+            }
+
+            // 绘制描述
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(step.description, canvas.width / 2, 30);
+
+            // 如果是求和,显示当前和
+            if (step.sum !== undefined) {
+                ctx.fillStyle = '#667eea';
+                ctx.font = 'bold 20px Arial';
+                ctx.fillText(`当前和: ${step.sum}`, canvas.width / 2, 60);
+            }
+
+            // 更新步骤显示
+            document.getElementById('currentStep').textContent = currentStepIndex + 1;
+            updateStats();
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            document.getElementById('comparisons').textContent = comparisons;
+            document.getElementById('swaps').textContent = swaps;
+        }
+
+        // 动画控制
+        function startAnimation() {
+            if (steps.length === 0) {
+                alert('请先选择一个算法!');
+                return;
+            }
+
+            if (isAnimating) return;
+
+            isAnimating = true;
+            const speed = parseInt(document.getElementById('speedControl').value);
+
+            animationInterval = setInterval(() => {
+                if (currentStepIndex < steps.length - 1) {
+                    currentStepIndex++;
+                    drawStep(steps[currentStepIndex]);
+                } else {
+                    pauseAnimation();
+                }
+            }, speed);
+        }
+
+        function pauseAnimation() {
+            isAnimating = false;
+            if (animationInterval) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function stepForward() {
+            if (steps.length === 0) {
+                alert('请先选择一个算法!');
+                return;
+            }
+
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                drawStep(steps[currentStepIndex]);
+            }
+        }
+
+        function resetAnimation() {
+            pauseAnimation();
+            currentStepIndex = 0;
+            if (steps.length > 0) {
+                drawStep(steps[0]);
+            }
+        }
+
+        // 初始化
+        window.onload = function() {
+            ctx.fillStyle = '#ecf0f1';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#7f8c8d';
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('选择一个算法开始可视化演示', canvas.width / 2, canvas.height / 2);
+        };
+    </script>
+</body>
+</html>
